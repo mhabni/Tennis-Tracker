@@ -727,6 +727,18 @@ function saveSession() {
 
   sessions.unshift(entry);
   save();
+  fetch(
+  "https://script.google.com/macros/s/AKfycbyA7bnArDzf_WEbGFoGpMGR32wsoVT1k2fPH-NicUtjCnPwGWhsodixoH5x7KfUJmm_/exec",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(entry)
+  }
+)
+.then(response => console.log("Backup successful"))
+.catch(error => console.error("Backup failed:", error));
   closeModal('session-modal');
   showToast('Session saved! 🎾');
   renderLog();
