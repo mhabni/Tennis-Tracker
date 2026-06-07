@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a1628">
+<title>🎾 Tennis Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:   #0a1628;
+    --teal:   #0d9488;
+    --teal-l: #14b8a6;
+    --gold:   #f59e0b;
+    --red:    #ef4444;
+    --green:  #22c55e;
+    --surface:#111e35;
+    --card:   #162040;
+    --border: rgba(255,255,255,0.08);
+    --text:   #f0f4ff;
+    --muted:  rgba(240,244,255,0.45);
+    --r:      18px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; background: var(--navy); }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--navy);
+    min-height: 100%;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100dvh; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, #0d9488 0%, #0a1628 60%);
+    padding: 56px 24px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '🎾';
+    position: absolute; right: -10px; top: 20px;
+    font-size: 100px; opacity: 0.12; transform: rotate(-20deg);
+  }
+  .header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px; line-height: 1.1;
+    letter-spacing: -0.5px;
+  }
+  .header p { color: var(--muted); font-size: 13px; margin-top: 6px; }
+
+  /* ── NAV TABS ── */
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+    padding: 0 4px;
+  }
+  .tab-btn {
+    flex: 1; padding: 14px 4px 12px;
+    background: none; border: none; color: var(--muted);
+    font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500;
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all .2s; text-align: center; letter-spacing: 0.3px;
+  }
+  .tab-btn.active { color: var(--teal-l); border-bottom-color: var(--teal-l); }
+  .tab-btn span { display: block; font-size: 18px; margin-bottom: 2px; }
+
+  /* ── SCROLL CONTENT ── */
+  .scroll { flex: 1; overflow-y: auto; padding: 20px 16px 40px; -webkit-overflow-scrolling: touch; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 16px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .badge {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px; font-weight: 600; letter-spacing: 1px;
+    padding: 2px 8px; border-radius: 20px;
+    background: var(--teal); color: white; text-transform: uppercase;
+  }
+
+  /* ── FORM ELEMENTS ── */
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+  input[type="text"], input[type="date"], input[type="number"], select, textarea {
+    width: 100%; padding: 14px 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 16px;
+    outline: none; -webkit-appearance: none; appearance: none;
+    transition: border-color .2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--teal); }
+  select option { background: var(--navy); }
+  textarea { resize: none; min-height: 80px; }
+  .field { margin-bottom: 16px; }
+
+  /* ── SLIDER RATING ── */
+  .slider-wrap { margin-bottom: 20px; }
+  .slider-label { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .slider-label .name { font-size: 14px; font-weight: 500; }
+  .slider-label .val {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px; min-width: 36px; text-align: right;
+    transition: color .2s;
+  }
+  input[type="range"] {
+    width: 100%; height: 6px;
+    -webkit-appearance: none; appearance: none;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px; outline: none; padding: 0; border: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--teal);
+    box-shadow: 0 0 0 4px rgba(13,148,136,0.3);
+    cursor: pointer;
+  }
+  .scale-hints { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  /* ── SEGMENTED CONTROL ── */
+  .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+  .seg-btn {
+    flex: 1; min-width: 60px;
+    padding: 12px 8px; border-radius: 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--muted); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all .15s; text-align: center;
+  }
+  .seg-btn.active { background: var(--teal); border-color: var(--teal); color: white; }
+
+  /* ── CHIP SELECTOR ── */
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    padding: 10px 16px; border-radius: 999px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--muted); font-size: 14px; cursor: pointer;
+    transition: all .15s;
+  }
+  .chip.active { background: rgba(13,148,136,0.2); border-color: var(--teal); color: var(--teal-l); }
+
+  /* ── BIG ACTION BTN ── */
+  .btn-primary {
+    width: 100%; padding: 18px;
+    background: linear-gradient(135deg, var(--teal), #0f766e);
+    border: none; border-radius: var(--r); color: white;
+    font-family: 'DM Sans', sans-serif; font-size: 17px; font-weight: 600;
+    cursor: pointer; letter-spacing: 0.3px;
+    box-shadow: 0 8px 24px rgba(13,148,136,0.35);
+    transition: transform .1s, box-shadow .1s;
+    margin-top: 8px;
+  }
+  .btn-primary:active { transform: scale(0.98); box-shadow: 0 4px 12px rgba(13,148,136,0.25); }
+  .btn-secondary {
+    width: 100%; padding: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border); border-radius: var(--r); color: var(--muted);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; cursor: pointer;
+    transition: all .15s; margin-top: 8px;
+  }
+  .btn-secondary:active { background: rgba(255,255,255,0.1); }
+
+  /* ── STEP PROGRESS ── */
+  .steps { display: flex; align-items: center; gap: 0; margin-bottom: 24px; }
+  .step-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,255,255,0.08); border: 2px solid var(--border);
+    color: var(--muted); font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all .3s;
+  }
+  .step-dot.done { background: var(--teal); border-color: var(--teal); color: white; }
+  .step-dot.active { border-color: var(--teal-l); color: var(--teal-l); }
+  .step-line { flex: 1; height: 2px; background: var(--border); }
+  .step-line.done { background: var(--teal); }
+
+  /* ── LOG ENTRIES ── */
+  .log-entry {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r); padding: 16px;
+    margin-bottom: 12px; cursor: pointer;
+    transition: border-color .2s;
+  }
+  .log-entry:active { border-color: var(--teal); }
+  .log-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .log-date { font-size: 12px; color: var(--muted); }
+  .log-type { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; }
+  .log-type.match { background: rgba(245,158,11,0.2); color: var(--gold); }
+  .log-type.practice { background: rgba(13,148,136,0.2); color: var(--teal-l); }
+  .log-scores { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+  .log-score { text-align: center; }
+  .log-score .s-val { font-family: 'DM Serif Display', serif; font-size: 22px; }
+  .log-score .s-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .log-bar { display: flex; gap: 4px; margin-top: 10px; }
+  .bar-seg { height: 4px; flex: 1; border-radius: 2px; background: rgba(255,255,255,0.08); }
+  .bar-seg.filled { background: var(--teal); }
+  .bar-seg.warn { background: var(--gold); }
+  .bar-seg.bad { background: var(--red); }
+
+  /* ── STATS SUMMARY ── */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-box {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px;
+    text-align: center;
+  }
+  .stat-box .s-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px; display: block;
+  }
+  .stat-box .s-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .trend { display: flex; align-items: center; gap: 4px; justify-content: center; font-size: 12px; margin-top: 4px; }
+  .trend.up { color: var(--green); }
+  .trend.down { color: var(--red); }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty .icon { font-size: 48px; margin-bottom: 16px; }
+  .empty p { font-size: 14px; line-height: 1.6; }
+
+  /* ── MODAL OVERLAY ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 200;
+    align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet {
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    width: 100%; max-height: 85dvh;
+    overflow-y: auto; padding: 16px 20px 40px;
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 36px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 20px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--teal); color: white;
+    padding: 12px 24px; border-radius: 999px;
+    font-size: 14px; font-weight: 500;
+    opacity: 0; transition: all .3s; z-index: 300; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── COLOR HELPERS ── */
+  .c-gold { color: var(--gold); }
+  .c-red { color: var(--red); }
+  .c-green { color: var(--green); }
+  .c-teal { color: var(--teal-l); }
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── SECTION PILL ── */
+  .section-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(13,148,136,0.12); border: 1px solid rgba(13,148,136,0.3);
+    color: var(--teal-l); font-size: 11px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 5px 12px; border-radius: 999px; margin-bottom: 14px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════ SCREEN: LOG ════ -->
+<div class="screen active" id="screen-log">
+
+  <div class="header">
+    <h1>Tennis<br>Tracker</h1>
+    <p id="header-sub">Tap + to log a session</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('log')"><span>📋</span>Log</button>
+    <button class="tab-btn" onclick="switchTab('stats')"><span>📊</span>Stats</button>
+    <button class="tab-btn" onclick="switchTab('trends')"><span>📈</span>Trends</button>
+  </div>
+
+  <div class="scroll" id="log-list-view">
+    <div id="log-entries"></div>
+    <div class="empty" id="log-empty" style="display:none">
+      <div class="icon">🎾</div>
+      <p>No sessions yet.<br>Tap the button below to log your first session.</p>
+    </div>
+  </div>
+
+  <div style="padding: 12px 16px 24px; background: var(--surface); border-top: 1px solid var(--border);">
+    <button class="btn-primary" onclick="openNewSession()">+ Log Session</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ SCREEN: STATS ════ -->
+<div class="screen" id="screen-stats">
+
+  <div class="header">
+    <h1>Stats &<br>Insights</h1>
+    <p>Your averages across all sessions</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn" onclick="switchTab('log')"><span>📋</span>Log</button>
+    <button class="tab-btn active" onclick="switchTab('stats')"><span>📊</span>Stats</button>
+    <button class="tab-btn" onclick="switchTab('trends')"><span>📈</span>Trends</button>
+  </div>
+
+  <div class="scroll" id="stats-content">
+    <div class="empty" id="stats-empty">
+      <div class="icon">📊</div>
+      <p>Log some sessions first<br>to see your stats here.</p>
+    </div>
+    <div id="stats-data" style="display:none">
+      <div class="section-pill">⚡ Emotional Control</div>
+      <div class="stat-grid" id="emotional-stats"></div>
+      <div class="divider"></div>
+      <div class="section-pill">🎾 Technical Skills</div>
+      <div class="stat-grid" id="technical-stats"></div>
+      <div class="divider"></div>
+      <div class="section-pill">🏆 Match Record</div>
+      <div class="stat-grid" id="match-stats"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ SCREEN: TRENDS ════ -->
+<div class="screen" id="screen-trends">
+
+  <div class="header">
+    <h1>Progress<br>Trends</h1>
+    <p>Last 8 sessions overview</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn" onclick="switchTab('log')"><span>📋</span>Log</button>
+    <button class="tab-btn" onclick="switchTab('stats')"><span>📊</span>Stats</button>
+    <button class="tab-btn active" onclick="switchTab('trends')"><span>📈</span>Trends</button>
+  </div>
+
+  <div class="scroll">
+    <div class="empty" id="trends-empty">
+      <div class="icon">📈</div>
+      <p>Log at least 3 sessions<br>to see your trends here.</p>
+    </div>
+    <div id="trends-data" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ MODAL: NEW SESSION ════ -->
+<div class="modal-overlay" id="session-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+
+    <!-- Step progress -->
+    <div class="steps" id="step-progress">
+      <div class="step-dot active" id="sd1">1</div>
+      <div class="step-line" id="sl1"></div>
+      <div class="step-dot" id="sd2">2</div>
+      <div class="step-line" id="sl2"></div>
+      <div class="step-dot" id="sd3">3</div>
+      <div class="step-line" id="sl3"></div>
+      <div class="step-dot" id="sd4">4</div>
+    </div>
+
+    <!-- STEP 1: Basics -->
+    <div id="step1">
+      <div class="modal-title">Session basics</div>
+
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="s-date">
+      </div>
+
+      <div class="field">
+        <label>Session type</label>
+        <div class="chips" id="type-chips">
+          <div class="chip active" data-val="Match" onclick="selectChip('type-chips',this)">🏆 Match</div>
+          <div class="chip" data-val="Practice" onclick="selectChip('type-chips',this)">🎯 Practice</div>
+          <div class="chip" data-val="Drill" onclick="selectChip('type-chips',this)">⚡ Drill</div>
+          <div class="chip" data-val="Coaching" onclick="selectChip('type-chips',this)">👨‍🏫 Coaching</div>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Duration (min)</label>
+          <input type="number" id="s-duration" placeholder="90" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label>Result</label>
+          <div class="seg" id="result-chips">
+            <div class="seg-btn active" data-val="—" onclick="selectSeg('result-chips',this)">—</div>
+            <div class="seg-btn" data-val="W" onclick="selectSeg('result-chips',this)">W</div>
+            <div class="seg-btn" data-val="L" onclick="selectSeg('result-chips',this)">L</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field" id="score-field" style="display:none">
+        <label>Score</label>
+        <input type="text" id="s-score" placeholder="e.g. 6-4, 3-6, 10-8">
+      </div>
+
+      <button class="btn-primary" onclick="goStep(2)">Next →</button>
+    </div>
+
+    <!-- STEP 2: Technical -->
+    <div id="step2" style="display:none">
+      <div class="modal-title">Technical ratings</div>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:20px;">Rate how each felt today (1 = rough, 10 = on fire)</p>
+
+      <div id="tech-sliders"></div>
+
+      <button class="btn-primary" onclick="goStep(3)">Next →</button>
+      <button class="btn-secondary" onclick="goStep(1)">← Back</button>
+    </div>
+
+    <!-- STEP 3: Emotional -->
+    <div id="step3" style="display:none">
+      <div class="modal-title">Mental game</div>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:20px;">The four metrics that matter most</p>
+
+      <!-- Reset Score -->
+      <div class="slider-wrap">
+        <div class="slider-label">
+          <div>
+            <div class="name">Reset Score</div>
+            <div style="font-size:11px;color:var(--muted)" id="reset-hint">Anger lasted several points</div>
+          </div>
+          <div class="val c-gold" id="reset-val">2</div>
+        </div>
+        <input type="range" min="1" max="5" value="2" id="e-reset" oninput="updateReset(this.value)">
+        <div class="scale-hints"><span>😤 Ruined games</span><span>✅ Immediate reset</span></div>
+      </div>
+
+      <!-- Rumination -->
+      <div class="slider-wrap">
+        <div class="slider-label">
+          <div>
+            <div class="name">Rumination</div>
+            <div style="font-size:11px;color:var(--muted)">How much replaying past mistakes?</div>
+          </div>
+          <div class="val c-red" id="rumin-val">5</div>
+        </div>
+        <input type="range" min="1" max="10" value="5" id="e-rumin" oninput="updateRumin(this.value)">
+        <div class="scale-hints"><span>🧘 Fully present</span><span>🔄 Constant replay</span></div>
+      </div>
+
+      <!-- Lingering Errors -->
+      <div class="field">
+        <label>Lingering errors (count)</label>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:8px;">Points lost because you were still thinking about the previous mistake</p>
+        <input type="number" id="e-linger" placeholder="0" inputmode="numeric" min="0">
+      </div>
+
+      <!-- Frustration Count -->
+      <div class="field">
+        <label>Frustration count</label>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:8px;">Head shakes, negative talk, slamming racket, etc.</p>
+        <input type="number" id="e-frustration" placeholder="0" inputmode="numeric" min="0">
+      </div>
+
+      <!-- Positive Reset Rate -->
+      <div class="row2">
+        <div class="field">
+          <label>Good resets</label>
+          <input type="number" id="e-resets-good" placeholder="0" inputmode="numeric" min="0">
+        </div>
+        <div class="field">
+          <label>Total triggers</label>
+          <input type="number" id="e-resets-total" placeholder="0" inputmode="numeric" min="0">
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="goStep(4)">Next →</button>
+      <button class="btn-secondary" onclick="goStep(2)">← Back</button>
+    </div>
+
+    <!-- STEP 4: Notes -->
+    <div id="step4" style="display:none">
+      <div class="modal-title">Session notes</div>
+
+      <div class="field">
+        <label>One win today 🏆</label>
+        <textarea id="s-win" placeholder="Something that felt good..." rows="2"></textarea>
+      </div>
+
+      <div class="field">
+        <label>One lesson learned 💡</label>
+        <textarea id="s-lesson" placeholder="What will you work on next time?" rows="2"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Biggest trigger</label>
+        <input type="text" id="s-trigger" placeholder="e.g. Missing easy forehand when leading">
+      </div>
+
+      <div class="field">
+        <label>Opponent level</label>
+        <div class="chips" id="opp-chips">
+          <div class="chip" data-val="Weaker" onclick="selectChip('opp-chips',this)">Weaker</div>
+          <div class="chip active" data-val="Similar" onclick="selectChip('opp-chips',this)">Similar</div>
+          <div class="chip" data-val="Better" onclick="selectChip('opp-chips',this)">Better</div>
+          <div class="chip" data-val="—" onclick="selectChip('opp-chips',this)">N/A</div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="saveSession()">💾 Save Session</button>
+      <button class="btn-secondary" onclick="goStep(3)">← Back</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal-sheet" id="detail-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Storage ──────────────────────────────────────────────────────────────────
+const STORE_KEY = 'tennis_sessions_v2';
+let sessions = [];
+try { sessions = JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch(e) { sessions = []; }
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(sessions)); }
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+document.getElementById('s-date').value = new Date().toISOString().split('T')[0];
+
+// Watch result chips for score field
+function updateScoreField() {
+  const val = getChipVal('result-chips') || '—';
+  document.getElementById('score-field').style.display = (val === 'W' || val === 'L') ? 'block' : 'none';
+}
+
+// Tech sliders config
+const TECH_SLIDERS = [
+  {id:'t-fh',  label:'Forehand',      hint:'Your weapon — how reliable?'},
+  {id:'t-bh',  label:'Backhand',      hint:'Key area for improvement'},
+  {id:'t-net', label:'Net Game',      hint:'Approach & volley confidence'},
+  {id:'t-srv', label:'Serve',         hint:'First serve %, double faults'},
+  {id:'t-mov', label:'Movement',      hint:'Footwork & court coverage'},
+];
+
+function buildTechSliders() {
+  const wrap = document.getElementById('tech-sliders');
+  wrap.innerHTML = '';
+  TECH_SLIDERS.forEach(s => {
+    wrap.innerHTML += `
+      <div class="slider-wrap">
+        <div class="slider-label">
+          <div>
+            <div class="name">${s.label}</div>
+            <div style="font-size:11px;color:var(--muted)">${s.hint}</div>
+          </div>
+          <div class="val" id="${s.id}-val" style="color:var(--teal-l)">6</div>
+        </div>
+        <input type="range" min="1" max="10" value="6" id="${s.id}"
+               oninput="document.getElementById('${s.id}-val').textContent=this.value;colorSliderVal('${s.id}-val',this.value,1,10)">
+        <div class="scale-hints"><span>1 rough</span><span>10 on fire</span></div>
+      </div>`;
+  });
+}
+buildTechSliders();
+
+// ── Color helpers ─────────────────────────────────────────────────────────────
+function colorSliderVal(elId, val, min, max, invert=false) {
+  const el = document.getElementById(elId);
+  const pct = (val - min) / (max - min);
+  const eff = invert ? 1 - pct : pct;
+  if (eff < 0.35) el.style.color = 'var(--red)';
+  else if (eff < 0.65) el.style.color = 'var(--gold)';
+  else el.style.color = 'var(--green)';
+}
+
+const RESET_HINTS = ['','One mistake ruined multiple games','Anger lasted several points',
+  'Recovered within a game','Recovered by next point','Immediate reset ✅'];
+function updateReset(v) {
+  document.getElementById('reset-val').textContent = v;
+  document.getElementById('reset-hint').textContent = RESET_HINTS[v];
+  colorSliderVal('reset-val', v, 1, 5);
+}
+function updateRumin(v) {
+  document.getElementById('rumin-val').textContent = v;
+  colorSliderVal('rumin-val', v, 1, 10, true);
+}
+updateReset(2); updateRumin(5);
+
+// ── Chip / Seg helpers ─────────────────────────────────────────────────────────
+function selectChip(groupId, el) {
+  document.querySelectorAll(`#${groupId} .chip`).forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  if (groupId === 'result-chips') updateScoreField();
+}
+function selectSeg(groupId, el) {
+  document.querySelectorAll(`#${groupId} .seg-btn`).forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  if (groupId === 'result-chips') updateScoreField();
+}
+function getChipVal(groupId) {
+  const el = document.querySelector(`#${groupId} .chip.active, #${groupId} .seg-btn.active`);
+  return el ? el.dataset.val : null;
+}
+
+// ── Step navigation ────────────────────────────────────────────────────────────
+let curStep = 1;
+function goStep(n) {
+  document.getElementById(`step${curStep}`).style.display = 'none';
+  document.getElementById(`step${n}`).style.display = 'block';
+  // update dots
+  for (let i = 1; i <= 4; i++) {
+    const dot = document.getElementById(`sd${i}`);
+    dot.className = 'step-dot' + (i < n ? ' done' : i === n ? ' active' : '');
+    if (i < 4) {
+      const line = document.getElementById(`sl${i}`);
+      line.className = 'step-line' + (i < n ? ' done' : '');
+    }
+  }
+  curStep = n;
+  document.querySelector('.modal-sheet').scrollTop = 0;
+}
+
+// ── Open new session ──────────────────────────────────────────────────────────
+function openNewSession() {
+  curStep = 1;
+  document.getElementById('step1').style.display = 'block';
+  ['step2','step3','step4'].forEach(s => document.getElementById(s).style.display = 'none');
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`sd${i}`).className = 'step-dot' + (i === 1 ? ' active' : '');
+    if (i < 4) document.getElementById(`sl${i}`).className = 'step-line';
+  }
+  // Reset form
+  document.getElementById('s-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('s-duration').value = '';
+  document.getElementById('s-score').value = '';
+  document.getElementById('s-win').value = '';
+  document.getElementById('s-lesson').value = '';
+  document.getElementById('s-trigger').value = '';
+  document.getElementById('e-linger').value = '';
+  document.getElementById('e-frustration').value = '';
+  document.getElementById('e-resets-good').value = '';
+  document.getElementById('e-resets-total').value = '';
+  document.getElementById('e-reset').value = 2; updateReset(2);
+  document.getElementById('e-rumin').value = 5; updateRumin(5);
+  selectChip('type-chips', document.querySelector('#type-chips .chip'));
+  selectSeg('result-chips', document.querySelector('#result-chips .seg-btn'));
+  selectChip('opp-chips', document.querySelectorAll('#opp-chips .chip')[1]);
+  buildTechSliders();
+  document.getElementById('session-modal').classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Close modal on overlay tap
+document.getElementById('session-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal('session-modal');
+});
+document.getElementById('detail-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal('detail-modal');
+});
+
+// ── Save session ──────────────────────────────────────────────────────────────
+function saveSession() {
+  const goodResets = parseInt(document.getElementById('e-resets-good').value) || 0;
+  const totalTriggers = parseInt(document.getElementById('e-resets-total').value) || 0;
+
+  const entry = {
+    id: Date.now(),
+    date: document.getElementById('s-date').value,
+    type: getChipVal('type-chips') || 'Practice',
+    duration: parseInt(document.getElementById('s-duration').value) || null,
+    result: getChipVal('result-chips') || '—',
+    score: document.getElementById('s-score').value.trim(),
+    opp: getChipVal('opp-chips') || 'Similar',
+    // Tech
+    forehand: parseInt(document.getElementById('t-fh').value),
+    backhand: parseInt(document.getElementById('t-bh').value),
+    netGame: parseInt(document.getElementById('t-net').value),
+    serve: parseInt(document.getElementById('t-srv').value),
+    movement: parseInt(document.getElementById('t-mov').value),
+    // Emotional
+    resetScore: parseInt(document.getElementById('e-reset').value),
+    rumination: parseInt(document.getElementById('e-rumin').value),
+    lingeringErrors: parseInt(document.getElementById('e-linger').value) || 0,
+    frustration: parseInt(document.getElementById('e-frustration').value) || 0,
+    goodResets, totalTriggers,
+    resetRate: totalTriggers > 0 ? Math.round(goodResets / totalTriggers * 100) : null,
+    // Notes
+    win: document.getElementById('s-win').value.trim(),
+    lesson: document.getElementById('s-lesson').value.trim(),
+    trigger: document.getElementById('s-trigger').value.trim(),
+  };
+
+  sessions.unshift(entry);
+  save();
+  closeModal('session-modal');
+  showToast('Session saved! 🎾');
+  renderLog();
+  renderStats();
+  renderTrends();
+}
+
+// ── Render Log ────────────────────────────────────────────────────────────────
+function renderLog() {
+  const container = document.getElementById('log-entries');
+  const empty = document.getElementById('log-empty');
+  const sub = document.getElementById('header-sub');
+
+  if (sessions.length === 0) {
+    container.innerHTML = '';
+    empty.style.display = 'block';
+    sub.textContent = 'Tap + to log your first session';
+    return;
+  }
+  empty.style.display = 'none';
+  sub.textContent = `${sessions.length} session${sessions.length > 1 ? 's' : ''} logged`;
+
+  container.innerHTML = sessions.map(s => {
+    const d = s.date ? new Date(s.date + 'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}) : '';
+    const typeClass = s.type === 'Match' ? 'match' : 'practice';
+    const resetColor = s.resetScore >= 4 ? 'c-green' : s.resetScore <= 2 ? 'c-red' : 'c-gold';
+    const ruminColor = s.rumination <= 3 ? 'c-green' : s.rumination >= 7 ? 'c-red' : 'c-gold';
+
+    // Mini bars for tech skills
+    const techAvg = Math.round((s.forehand + s.backhand + s.netGame + s.serve + s.movement) / 5);
+    const bars5 = Array.from({length:5}, (_,i) => {
+      const filled = i < Math.round(techAvg / 2);
+      return `<div class="bar-seg ${filled ? (techAvg >= 7 ? 'filled' : 'warn') : ''}"></div>`;
+    }).join('');
+
+    return `<div class="log-entry" onclick="showDetail(${s.id})">
+      <div class="log-top">
+        <div>
+          <div class="log-date">${d} ${s.duration ? '· ' + s.duration + 'min' : ''}</div>
+          ${s.result !== '—' ? `<div style="font-size:13px;margin-top:2px;font-weight:600;color:${s.result==='W'?'var(--green)':'var(--red)'}">${s.result}${s.score?' · '+s.score:''}</div>` : ''}
+        </div>
+        <span class="log-type ${typeClass}">${s.type}</span>
+      </div>
+      <div class="log-scores">
+        <div class="log-score">
+          <div class="s-val ${resetColor}">${s.resetScore}</div>
+          <div class="s-lbl">Reset<br>/5</div>
+        </div>
+        <div class="log-score">
+          <div class="s-val ${ruminColor}">${s.rumination}</div>
+          <div class="s-lbl">Rumin<br>/10</div>
+        </div>
+        <div class="log-score">
+          <div class="s-val">${s.backhand}</div>
+          <div class="s-lbl">BH<br>/10</div>
+        </div>
+        <div class="log-score">
+          <div class="s-val">${s.netGame}</div>
+          <div class="s-lbl">Net<br>/10</div>
+        </div>
+        ${s.resetRate !== null ? `<div class="log-score"><div class="s-val ${s.resetRate>=70?'c-green':s.resetRate<50?'c-red':'c-gold'}">${s.resetRate}%</div><div class="s-lbl">Resets<br>made</div></div>` : ''}
+      </div>
+      <div class="log-bar" style="margin-top:10px">${bars5}</div>
+      ${s.win ? `<div style="font-size:12px;color:var(--muted);margin-top:8px">🏆 ${s.win}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── Show detail ───────────────────────────────────────────────────────────────
+function showDetail(id) {
+  const s = sessions.find(x => x.id === id);
+  if (!s) return;
+  const d = s.date ? new Date(s.date + 'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}) : '';
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="modal-handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+      <div>
+        <div class="modal-title" style="margin-bottom:4px">${d}</div>
+        <span class="log-type ${s.type==='Match'?'match':'practice'}">${s.type}</span>
+        ${s.duration ? `<span style="font-size:12px;color:var(--muted);margin-left:8px">${s.duration} min</span>` : ''}
+        ${s.result !== '—' ? `<span style="font-size:14px;font-weight:700;margin-left:8px;color:${s.result==='W'?'var(--green)':'var(--red)'}">${s.result}${s.score?' · '+s.score:''}</span>` : ''}
+      </div>
+      <button onclick="deleteSession(${id})" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:var(--red);padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer">Delete</button>
+    </div>
+
+    <div class="section-pill">🧠 Mental Game</div>
+    <div class="stat-grid" style="margin-bottom:16px">
+      ${statBox('Reset Score', s.resetScore + '/5', s.resetScore >= 4 ? 'green' : s.resetScore <= 2 ? 'red' : 'gold')}
+      ${statBox('Rumination', s.rumination + '/10', s.rumination <= 3 ? 'green' : s.rumination >= 7 ? 'red' : 'gold', true)}
+      ${statBox('Lingering Errors', s.lingeringErrors, s.lingeringErrors <= 3 ? 'green' : s.lingeringErrors >= 8 ? 'red' : 'gold', true)}
+      ${statBox('Frustration Count', s.frustration, s.frustration <= 3 ? 'green' : s.frustration >= 10 ? 'red' : 'gold', true)}
+      ${s.resetRate !== null ? statBox('Reset Rate', s.resetRate + '%', s.resetRate >= 70 ? 'green' : s.resetRate < 50 ? 'red' : 'gold') : ''}
+    </div>
+
+    <div class="section-pill">🎾 Technical</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      ${['Forehand','Backhand','Net Game','Serve','Movement'].map((lbl,i) => {
+        const val = [s.forehand,s.backhand,s.netGame,s.serve,s.movement][i];
+        return `<div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px">${lbl}</span>
+          <span style="font-family:'DM Serif Display',serif;font-size:22px;color:${val>=7?'var(--green)':val<=4?'var(--red)':'var(--gold)'}">${val}</span>
+        </div>`;
+      }).join('')}
+    </div>
+
+    ${(s.win || s.lesson || s.trigger) ? `
+    <div class="section-pill">📝 Notes</div>
+    ${s.win ? `<div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:12px;padding:14px;margin-bottom:8px"><div style="font-size:11px;color:var(--green);font-weight:600;letter-spacing:1px;margin-bottom:4px">WIN</div><div style="font-size:14px">${s.win}</div></div>` : ''}
+    ${s.lesson ? `<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:14px;margin-bottom:8px"><div style="font-size:11px;color:var(--gold);font-weight:600;letter-spacing:1px;margin-bottom:4px">LESSON</div><div style="font-size:14px">${s.lesson}</div></div>` : ''}
+    ${s.trigger ? `<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:14px;margin-bottom:8px"><div style="font-size:11px;color:var(--red);font-weight:600;letter-spacing:1px;margin-bottom:4px">TRIGGER</div><div style="font-size:14px">${s.trigger}</div></div>` : ''}
+    ` : ''}
+    <button class="btn-secondary" onclick="closeModal('detail-modal')">Close</button>
+  `;
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function statBox(label, val, color, invert=false) {
+  const c = color === 'green' ? 'var(--green)' : color === 'red' ? 'var(--red)' : 'var(--gold)';
+  return `<div class="stat-box"><span class="s-num" style="color:${c}">${val}</span><div class="s-lbl">${label}</div></div>`;
+}
+
+function deleteSession(id) {
+  if (!confirm('Delete this session?')) return;
+  sessions = sessions.filter(s => s.id !== id);
+  save();
+  closeModal('detail-modal');
+  showToast('Session deleted');
+  renderLog(); renderStats(); renderTrends();
+}
+
+// ── Render Stats ──────────────────────────────────────────────────────────────
+function avg(arr) { return arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length) : null; }
+function fmt(v, dec=1) { return v !== null ? v.toFixed(dec) : '—'; }
+
+function renderStats() {
+  const n = sessions.length;
+  if (n === 0) {
+    document.getElementById('stats-empty').style.display = 'block';
+    document.getElementById('stats-data').style.display = 'none';
+    return;
+  }
+  document.getElementById('stats-empty').style.display = 'none';
+  document.getElementById('stats-data').style.display = 'block';
+
+  // Emotional
+  const recentHalf = sessions.slice(0, Math.ceil(n/2));
+  const olderHalf  = sessions.slice(Math.ceil(n/2));
+  function trendArrow(metric, invert=false) {
+    if (sessions.length < 4) return '';
+    const rAvg = avg(recentHalf.map(s=>s[metric]).filter(x=>x!=null));
+    const oAvg = avg(olderHalf.map(s=>s[metric]).filter(x=>x!=null));
+    if (rAvg === null || oAvg === null) return '';
+    const improved = invert ? rAvg < oAvg : rAvg > oAvg;
+    return `<div class="trend ${improved?'up':'down'}">${improved?'↑ improving':'↓ declining'}</div>`;
+  }
+
+  const resetAvg = avg(sessions.map(s=>s.resetScore));
+  const ruminAvg = avg(sessions.map(s=>s.rumination));
+  const lingerAvg = avg(sessions.map(s=>s.lingeringErrors));
+  const frustAvg = avg(sessions.map(s=>s.frustration));
+  const rrArr = sessions.map(s=>s.resetRate).filter(x=>x!==null);
+  const rrAvg = avg(rrArr);
+
+  document.getElementById('emotional-stats').innerHTML = `
+    <div class="stat-box">
+      <span class="s-num" style="color:${resetAvg>=4?'var(--green)':resetAvg<=2?'var(--red)':'var(--gold)'}">${fmt(resetAvg)}</span>
+      <div class="s-lbl">Reset Score avg /5</div>
+      ${trendArrow('resetScore')}
+    </div>
+    <div class="stat-box">
+      <span class="s-num" style="color:${ruminAvg<=3?'var(--green)':ruminAvg>=7?'var(--red)':'var(--gold)'}">${fmt(ruminAvg)}</span>
+      <div class="s-lbl">Rumination avg /10</div>
+      ${trendArrow('rumination', true)}
+    </div>
+    <div class="stat-box">
+      <span class="s-num" style="color:${lingerAvg<=3?'var(--green)':lingerAvg>=8?'var(--red)':'var(--gold)'}">${fmt(lingerAvg,0)}</span>
+      <div class="s-lbl">Lingering Errors avg</div>
+      ${trendArrow('lingeringErrors', true)}
+    </div>
+    <div class="stat-box">
+      <span class="s-num" style="color:${rrAvg!==null?(rrAvg>=70?'var(--green)':rrAvg<50?'var(--red)':'var(--gold)'):'var(--muted)'}">${rrAvg!==null?Math.round(rrAvg)+'%':'—'}</span>
+      <div class="s-lbl">Reset Rate avg</div>
+      ${trendArrow('resetRate')}
+    </div>
+  `;
+
+  const fhAvg = avg(sessions.map(s=>s.forehand));
+  const bhAvg = avg(sessions.map(s=>s.backhand));
+  const netAvg = avg(sessions.map(s=>s.netGame));
+  const srvAvg = avg(sessions.map(s=>s.serve));
+
+  document.getElementById('technical-stats').innerHTML = `
+    ${miniStat('Forehand', fmt(fhAvg), 'forehand')}
+    ${miniStat('Backhand', fmt(bhAvg), 'backhand')}
+    ${miniStat('Net Game', fmt(netAvg), 'netGame')}
+    ${miniStat('Serve', fmt(srvAvg), 'serve')}
+  `;
+
+  const matches = sessions.filter(s=>s.type==='Match');
+  const wins = matches.filter(s=>s.result==='W').length;
+  const losses = matches.filter(s=>s.result==='L').length;
+
+  document.getElementById('match-stats').innerHTML = `
+    <div class="stat-box">
+      <span class="s-num c-green">${wins}</span>
+      <div class="s-lbl">Wins</div>
+    </div>
+    <div class="stat-box">
+      <span class="s-num c-red">${losses}</span>
+      <div class="s-lbl">Losses</div>
+    </div>
+    <div class="stat-box">
+      <span class="s-num">${n}</span>
+      <div class="s-lbl">Total Sessions</div>
+    </div>
+    <div class="stat-box">
+      <span class="s-num c-teal">${matches.length}</span>
+      <div class="s-lbl">Matches Played</div>
+    </div>
+  `;
+}
+
+function miniStat(label, val, key) {
+  const c = val !== '—' ? (parseFloat(val)>=7?'var(--green)':parseFloat(val)<=4?'var(--red)':'var(--gold)') : 'var(--muted)';
+  return `<div class="stat-box"><span class="s-num" style="color:${c}">${val}</span><div class="s-lbl">${label} avg</div></div>`;
+}
+
+// ── Render Trends ─────────────────────────────────────────────────────────────
+function renderTrends() {
+  const empty = document.getElementById('trends-empty');
+  const data = document.getElementById('trends-data');
+
+  if (sessions.length < 3) {
+    empty.style.display = 'block';
+    data.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  data.style.display = 'block';
+
+  const recent = [...sessions].reverse().slice(-8);
+
+  function miniChart(label, values, max, invert=false) {
+    const dots = values.map((v,i) => {
+      if (v === null || v === undefined) return '<div style="width:8px;height:8px;border-radius:50%;background:var(--border)"></div>';
+      const pct = v / max;
+      const good = invert ? pct < 0.4 : pct > 0.6;
+      const bad  = invert ? pct > 0.7 : pct < 0.3;
+      const color = good ? 'var(--green)' : bad ? 'var(--red)' : 'var(--gold)';
+      const h = Math.round(pct * 40) + 4;
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="font-size:9px;color:${color};font-weight:600">${v}</div>
+        <div style="width:8px;height:${h}px;border-radius:4px;background:${color};opacity:0.8"></div>
+      </div>`;
+    }).join('');
+    return `<div class="card" style="margin-bottom:10px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:14px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-size:11px">${label}</div>
+      <div style="display:flex;align-items:flex-end;gap:8px;height:60px">${dots}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:9px;color:var(--muted)">oldest</span><span style="font-size:9px;color:var(--muted)">latest</span></div>
+    </div>`;
+  }
+
+  data.innerHTML = `
+    <div class="section-pill">🧠 Mental Game — last ${recent.length} sessions</div>
+    ${miniChart('Reset Score (higher = better, /5)', recent.map(s=>s.resetScore), 5)}
+    ${miniChart('Rumination (lower = better, /10)', recent.map(s=>s.rumination), 10, true)}
+    ${miniChart('Lingering Errors (lower = better)', recent.map(s=>s.lingeringErrors), Math.max(...recent.map(s=>s.lingeringErrors||0), 1), true)}
+    <div class="section-pill">🎾 Technical Skills — last ${recent.length} sessions</div>
+    ${miniChart('Backhand (/10)', recent.map(s=>s.backhand), 10)}
+    ${miniChart('Net Game (/10)', recent.map(s=>s.netGame), 10)}
+    ${miniChart('Forehand (/10)', recent.map(s=>s.forehand), 10)}
+  `;
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['log','stats','trends'][i] === tab);
+  });
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + tab).classList.add('active');
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Initial render ────────────────────────────────────────────────────────────
+renderLog();
+renderStats();
+renderTrends();
+</script>
+</body>
+</html>
